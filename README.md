@@ -1,2 +1,2 @@
-# Discord music bot
-Discord bot for playing music on discord server using latest discord.js library
+# PC-Electronic-Basics-Music-Bot
+An advanced Music System with Audio Filtering, A unique Music Request System and much more!
