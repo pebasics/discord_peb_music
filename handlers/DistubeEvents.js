@@ -8,20 +8,19 @@ let voiceMap = new Map();
  *
  * @param {PEB} client
  */
-module.exports = async (client) => {
-  client.distube.setMaxListeners(0);
-
-  async function autoresume() {
+async function autoresume() {
+    if (!client.autoresume) return;
     let guildIds = await client.autoresume.keys;
     if (!guildIds || !guildIds.length) return;
     for (const GID of guildIds) {
       let guild = client.guilds.cache.get(GID);
       if (!guild) await client.autoresume.delete(gId);
       let data = await client.autoresume.get(guild.id);
+      if (!data) return;
       let voiceChannel = guild.channels.cache.get(data.voiceChannel);
       if (!voiceChannel && data.voiceChannel)
         voiceChannel =
-          (await guild.channels.fetch(data.voiceChannel).catch(() => { })) ||
+          (await guild.channels.fetch(data.voiceChannel).catch(() => {})) ||
           false;
       if (
         !voiceChannel ||
@@ -35,7 +34,7 @@ module.exports = async (client) => {
       let textChannel = guild.channels.cache.get(data.textChannel);
       if (!textChannel)
         textChannel =
-          (await guild.channels.fetch(data.textChannel).catch(() => { })) ||
+          (await guild.channels.fetch(data.textChannel).catch(() => {})) ||
           false;
       if (!textChannel) await client.autoresume.delete(gId);
       let tracks = data.songs;
@@ -91,6 +90,7 @@ module.exports = async (client) => {
     // events
     client.distube.on("playSong", async (queue, song) => {
       let data = await client.music.get(`${queue.textChannel.guildId}.music`);
+      if (!data) return;
       await client.updatequeue(queue);
       await client.updateplayer(queue);
       if (data.channel === queue.textChannel.id) return;
@@ -128,6 +128,7 @@ module.exports = async (client) => {
 
     client.distube.on("addSong", async (queue, song) => {
       let data = await client.music.get(`${queue.textChannel.guildId}.music`);
+      if (!data) return;
       await client.updatequeue(queue);
       if (data.channel === queue.textChannel.id) return;
 
@@ -172,6 +173,7 @@ module.exports = async (client) => {
 
     client.distube.on("addList", async (queue, playlist) => {
       let data = await client.music.get(`${queue.textChannel.guildId}.music`);
+      if (!data) return;
       await client.updatequeue(queue);
       if (data.channel === queue.textChannel.id) return;
       queue.textChannel
@@ -218,10 +220,11 @@ module.exports = async (client) => {
       await client.editPlayerMessage(queue.textChannel);
       await client.updateembed(client, queue.textChannel.guild);
       let db = await client.music?.get(`${queue.textChannel.guildId}.vc`);
-      if (db.enable) {
+      if (db && db?.enable) {
         await client.joinVoiceChannel(queue.textChannel.guild);
       }
       let data = await client.music.get(`${queue.textChannel.guildId}.music`);
+      if (!data) return;
       if (data.channel === queue.textChannel.id) return;
       queue.textChannel
         .send({
@@ -229,7 +232,9 @@ module.exports = async (client) => {
             new MessageEmbed()
               .setColor(client.config.embed.color)
               .setDescription(
-                `${client.config.emoji.ERROR} Disconnected From ${voiceMap.get(queue.textChannel.guildId)} Voice Channel`
+                `${client.config.emoji.ERROR} Disconnected From ${voiceMap.get(
+                  queue.textChannel.guildId
+                )} Voice Channel`
               ),
           ],
         })
@@ -343,6 +348,7 @@ module.exports = async (client) => {
             autoplay: newQueue.autoplay,
           });
           let data = await client.autoresume.get(newQueue.textChannel.guildId);
+          if (!data) return;
           if (data?.guild != newQueue.textChannel.guildId) {
             await client.autoresume.set(
               `${newQueue.textChannel.guildId}.guild`,
@@ -481,14 +487,14 @@ module.exports = async (client) => {
           });
       }
     });
-  } catch (e) { }
+  } catch (e) {}
 
   // interaction handling
   try {
     client.on("interactionCreate", async (interaction) => {
       if (!interaction.guild || interaction.user.bot) return;
       if (interaction.isButton()) {
-        await interaction.deferUpdate().catch((e) => { });
+        await interaction.deferUpdate().catch((e) => {});
         const { customId, member, guild } = interaction;
         let voiceMember = interaction.guild.members.cache.get(member.id);
         let channel = voiceMember.voice.channel;
@@ -551,8 +557,11 @@ module.exports = async (client) => {
                   `** ${client.config.emoji.ERROR} i am Not Playing Right Now **`
                 );
               } else {
-                await queue.skip().catch((e) => { });
-                send(interaction, `**${client.config.emoji.SUCCESS} Skip for Next Song**.`);
+                await queue.skip().catch((e) => {});
+                send(
+                  interaction,
+                  `**${client.config.emoji.SUCCESS} Skip for Next Song**.`
+                );
               }
             }
             break;
@@ -577,8 +586,11 @@ module.exports = async (client) => {
                   `** ${client.config.emoji.ERROR} i am Not Playing Right Now **`
                 );
               } else {
-                await queue.stop().catch((e) => { });
-                send(interaction, `** ${client.config.emoji.SUCCESS} Song Stoped and Left Channel !!**.`);
+                await queue.stop().catch((e) => {});
+                send(
+                  interaction,
+                  `** ${client.config.emoji.SUCCESS} Song Stoped and Left Channel !!**.`
+                );
               }
             }
             break;
@@ -604,10 +616,16 @@ module.exports = async (client) => {
                 );
               } else if (queue.paused) {
                 await queue.resume();
-                send(interaction, `** ${client.config.emoji.SUCCESS} Queue Resumed!! **`);
+                send(
+                  interaction,
+                  `** ${client.config.emoji.SUCCESS} Queue Resumed!! **`
+                );
               } else if (!queue.paused) {
                 await queue.pause();
-                send(interaction, `** ${client.config.emoji.SUCCESS} Queue Paused !! **`);
+                send(
+                  interaction,
+                  `** ${client.config.emoji.SUCCESS} Queue Paused !! **`
+                );
               }
             }
             break;
@@ -672,9 +690,13 @@ module.exports = async (client) => {
       if (message.channelId === musicchannel.id) {
         // code
         if (message.author.bot) {
-          msgdelete();
+          if (message.id != data.qmsg || message.id != data.pmsg) {
+            msgdelete();
+          }
         } else {
-          msgdelete();
+          if (message.id != data.qmsg || message.id != data.pmsg) {
+            msgdelete();
+          }
           let voiceChannel = message.member.voice.channel;
 
           if (!message.guild.me.permissions.has("CONNECT")) {
@@ -711,21 +733,21 @@ module.exports = async (client) => {
             message.delete().catch(() => {
               setTimeout(() => {
                 try {
-                  message.delete().catch(() => { });
-                } catch (e) { }
+                  message.delete().catch(() => {});
+                } catch (e) {}
               }, 5000);
             });
           } catch (e) {
             setTimeout(() => {
               try {
-                message.delete().catch(() => { });
-              } catch (e) { }
+                message.delete().catch(() => {});
+              } catch (e) {}
             }, 5000);
           }
         }, 1000);
       }
     });
-  } catch (e) { }
+  } catch (e) {}
 
   async function send(interaction, string) {
     interaction
