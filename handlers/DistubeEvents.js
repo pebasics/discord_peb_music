@@ -8,12 +8,15 @@ let voiceMap = new Map();
  *
  * @param {PEB} client
  */
-async function autoresume() {
+module.exports = async (client) => {
+  client.distube.setMaxListeners(0);
+
+  async function autoresume() {
     if (!client.autoresume) return;
     let guildIds = await client.autoresume.keys;
     if (!guildIds || !guildIds.length) return;
-    for (const GID of guildIds) {
-      let guild = client.guilds.cache.get(GID);
+    for (const gId of guildIds) {
+      let guild = client.guilds.cache.get(gId);
       if (!guild) await client.autoresume.delete(gId);
       let data = await client.autoresume.get(guild.id);
       if (!data) return;
@@ -232,9 +235,9 @@ async function autoresume() {
             new MessageEmbed()
               .setColor(client.config.embed.color)
               .setDescription(
-                `${client.config.emoji.ERROR} Disconnected From ${voiceMap.get(
+                `${client.config.emoji.ERROR} Disconnected From <#${voiceMap.get(
                   queue.textChannel.guildId
-                )} Voice Channel`
+                )}> Voice Channel`
               ),
           ],
         })
@@ -691,11 +694,15 @@ async function autoresume() {
         // code
         if (message.author.bot) {
           if (message.id != data.qmsg || message.id != data.pmsg) {
-            msgdelete();
+            setTimeout(() => {
+              message.delete().catch((e) => {});
+            }, 3000);
           }
         } else {
           if (message.id != data.qmsg || message.id != data.pmsg) {
-            msgdelete();
+            setTimeout(() => {
+              message.delete().catch((e) => {});
+            }, 1000);
           }
           let voiceChannel = message.member.voice.channel;
 
@@ -727,25 +734,6 @@ async function autoresume() {
           }
         }
       }
-      function msgdelete() {
-        setTimeout(() => {
-          try {
-            message.delete().catch(() => {
-              setTimeout(() => {
-                try {
-                  message.delete().catch(() => {});
-                } catch (e) {}
-              }, 5000);
-            });
-          } catch (e) {
-            setTimeout(() => {
-              try {
-                message.delete().catch(() => {});
-              } catch (e) {}
-            }, 5000);
-          }
-        }, 1000);
-      }
     });
   } catch (e) {}
 
@@ -755,7 +743,7 @@ async function autoresume() {
         embeds: [
           new MessageEmbed()
             .setColor(client.config.embed.color)
-            .setDescription(`${string.substring(0, 3000)}`)
+            .setTitle(`${string.substring(0, 3000)}`)
             .setFooter(client.getFooter(interaction.user)),
         ],
         // ephemeral: true,
