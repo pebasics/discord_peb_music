@@ -71,7 +71,7 @@ module.exports = {
   links: {
     inviteURL:
       process.env.inviteURL ||
-      `https://discord.com/api/oauth2/authorize?client_id=BOTID&permissions=929668755359957052&scope=bot%20applications.commands`,
+      `https://discord.com/api/oauth2/authorize?client_id=929668755359957052&permissions=8&scope=bot%20applications.commands`,
     DiscordServer: process.env.DiscordServer || `https://discord.gg/F5JvxYAZkt`,
     WebsiteURL: process.env.WebsiteURL || `https://pe-basics.com/`,
   },
