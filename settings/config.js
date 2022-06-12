@@ -1,6 +1,6 @@
 module.exports = {
   TOKEN:
-  process.env.TOKEN || "OTI5NjY4NzU1MzU5OTU3MDUy.GqdmOx.cWxwDHJ_hnDBmCoOUMqlNoXsIL5gx9OjK5Gwmc",
+  process.env.TOKEN || "token",
   PREFIX: process.env.PREFIX || "+",
   embed: {
     color: process.env.color || "#0x6ab8c6",
@@ -21,7 +21,7 @@ module.exports = {
   },
   // othersmongodb+srv://peb:<password>@cluster0.9bhkl.mongodb.net/?retryWrites=true&w=majority
   guildID: process.env.guildID || "900499906089877524", // for slash command
-  mongodb : process.env.mongodb || "mongodb+srv://peb_bot_manager:vladbane123@peb-bot-1.vzu92.mongodb.net/?retryWrites=true&w=majority",
+  mongodb : process.env.mongodb || "mongourl",
 
   
   filters: {
